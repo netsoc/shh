@@ -1,0 +1,16 @@
+version: '3'
+services:
+  app:
+    image: ghcr.io/netsoc/shhd:dev
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    environment:
+      - SHHD_LOG_LEVEL=debug
+      - SHHD_LISTEN_ADDRESS=:2222
+    ports:
+      - '2222:2222'
+    volumes:
+      - .:/usr/local/lib/shhd
+      - ./config.yaml:/run/config/shhd.yaml:ro
+    user: '1000:1000'

@@ -1,0 +1,14 @@
+FROM golang:1.15-alpine
+RUN apk --no-cache add git gcc musl-dev
+
+RUN install -d -m 777 /.cache
+WORKDIR /usr/local/lib/shhd
+VOLUME /usr/local/lib/shhd
+
+COPY tools.go ./
+RUN cat tools.go | sed -nr 's|^\t_ "(.+)"$|\1|p' | xargs -tI % go get %
+
+COPY build.dev.sh /usr/local/bin/build.sh
+CMD ["CompileDaemon", "-exclude-dir=.git", \
+    "-build=go build -o bin/shhd ./cmd/shhd", "-command=bin/shhd", \
+    "-graceful-kill"]

@@ -1,0 +1,7 @@
+log_level: DEBUG
+iam:
+  url: https://iam.netsoc.ie/v1
+  token: A.B.C
+  token_file: /path/to/token.txt
+  allow_insecure: false
+listen_address: ':22'
