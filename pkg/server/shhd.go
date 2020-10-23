@@ -19,7 +19,8 @@ func NewServer(c Config) *Server {
 	s := &Server{
 		config: c,
 		ssh: &ssh.Server{
-			Addr: c.ListenAddress,
+			Addr:        c.SSH.ListenAddress,
+			HostSigners: c.SSH.HostKeys,
 		},
 	}
 

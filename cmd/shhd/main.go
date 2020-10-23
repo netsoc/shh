@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/fsnotify/fsnotify"
+	"github.com/gliderlabs/ssh"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
@@ -26,7 +27,9 @@ func init() {
 	viper.SetDefault("iam.token_file", "")
 	viper.SetDefault("iam.allow_insecure", false)
 
-	viper.SetDefault("listen_address", ":22")
+	viper.SetDefault("ssh.listen_address", ":22")
+	viper.SetDefault("ssh.host_keys", []ssh.Signer{})
+	viper.SetDefault("ssh.host_key_files", []string{})
 
 	// Config file loading
 	viper.SetConfigType("yaml")

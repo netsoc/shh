@@ -4,4 +4,7 @@ iam:
   token: A.B.C
   token_file: /path/to/token.txt
   allow_insecure: false
-listen_address: ':22'
+ssh:
+  listen_address: ':22'
+  host_keys: []
+  host_key_files: []
