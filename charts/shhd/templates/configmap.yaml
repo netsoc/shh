@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "shhd.fullname" . }}
+  labels:
+    {{- include "shhd.labels" . | nindent 4 }}
+data:
+  {{- with .Values.config }}
+  shhd.yaml: |
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
