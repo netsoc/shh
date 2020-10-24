@@ -100,7 +100,7 @@ func (c *Config) ReadSecrets() error {
 			return fmt.Errorf("failed to read IAM token file: %w", err)
 		}
 
-		c.IAM.TokenFile = strings.TrimSpace(string(t))
+		c.IAM.Token = strings.TrimSpace(string(t))
 	}
 
 	for _, f := range c.SSH.HostKeyFiles {
