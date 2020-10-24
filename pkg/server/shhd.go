@@ -18,6 +18,7 @@ type key int
 const (
 	keyUser = iota
 	keyUserToken
+	keyWsLogin
 )
 
 // Server represents the shhd server

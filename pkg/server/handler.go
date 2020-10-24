@@ -22,8 +22,19 @@ func (s *Server) doSession(sess ssh.Session) error {
 		"command": sess.RawCommand(),
 	}).Info("Opened SSH session")
 
+	sshPTY, resizeChan, interactive := sess.Pty()
+	wsLogin := sess.Context().Value(keyWsLogin).(bool)
+	command := sess.RawCommand()
+	if wsLogin {
+		if interactive {
+			command = "netsoc webspace login"
+		} else {
+			command = "netsoc webspace exec -- " + command
+		}
+	}
+
 	token := sess.Context().Value(keyUserToken).(string)
-	cmd, err := util.NewShellJail(&s.config.Jail, user, token, os.Getenv("PATH"), sess.RawCommand())
+	cmd, err := util.NewShellJail(&s.config.Jail, user, token, os.Getenv("PATH"), command)
 	if err != nil {
 		return fmt.Errorf("failed to create nsjail command: %w", err)
 	}
@@ -47,7 +58,6 @@ func (s *Server) doSession(sess ssh.Session) error {
 		}
 	}
 
-	sshPTY, resizeChan, interactive := sess.Pty()
 	if interactive {
 		cmd.Env = append(cmd.Env, "TERM="+sshPTY.Term)
 
