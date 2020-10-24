@@ -1,7 +1,11 @@
 package util
 
 import (
+	"bytes"
+	"encoding/binary"
+	"errors"
 	"fmt"
+	"net"
 	"os"
 	"os/exec"
 	"path"
@@ -11,8 +15,11 @@ import (
 	"github.com/MakeNowJust/heredoc"
 	"github.com/Masterminds/sprig/v3"
 	iam "github.com/netsoc/iam/client"
+	"github.com/vishvananda/netlink"
 	"golang.org/x/sys/unix"
 )
+
+var allAddr = net.IPv4(0xff, 0xff, 0xff, 0xff)
 
 // JailConfig represents jail configuration
 type JailConfig struct {
@@ -31,14 +38,25 @@ type JailConfig struct {
 	} `mapstructure:"cgroups"`
 
 	HomeSize uint64 `mapstructure:"home_size"`
+
+	Network struct {
+		Interface string
+		CIDR      net.IPNet
+	}
 }
 
+type jailNetInfo struct {
+	IP   net.IP
+	Mask string
+}
 type jailInfo struct {
 	Config  *JailConfig
 	User    *iam.User
 	Token   string
 	Path    string
 	Command string
+
+	Net jailNetInfo
 }
 
 var configTemplate = template.Must(template.New("nsjail.cfg").Funcs(sprig.GenericFuncMap()).Parse(heredoc.Doc(`
@@ -60,6 +78,7 @@ var configTemplate = template.Must(template.New("nsjail.cfg").Funcs(sprig.Generi
 
 	cap: "CAP_SETUID"
 	cap: "CAP_SETGID"
+	cap: "CAP_NET_RAW"
 	skip_setsid: true
 
 	cgroup_mem_parent: "{{ .Config.Cgroups.Name }}"
@@ -72,12 +91,10 @@ var configTemplate = template.Must(template.New("nsjail.cfg").Funcs(sprig.Generi
 	uidmap {
 		inside_id: "0"
 		outside_id: "{{ .Config.UIDStart }}"
-		count: 65537
 	}
 	gidmap {
 		inside_id: "0"
 		outside_id: "{{ .Config.GIDStart }}"
-		count: 65537
 	}
 
 	mount {
@@ -170,11 +187,15 @@ var configTemplate = template.Must(template.New("nsjail.cfg").Funcs(sprig.Generi
 
 	mount {
 		dst: "/etc/passwd"
-		src_content: "root:x:0:0::/:/bin/ash\n{{ .User.Username }}:x:1000:1000::/home/{{ .User.Username }}:/usr/bin/fish\n"
+		src_content: "{{ .User.Username }}:x:0:0::/home/{{ .User.Username }}:/usr/bin/fish\n"
 	}
 	mount {
 		dst: "/etc/group"
-		src_content: "root:x:0:root\n{{ .User.Username }}:x:1000:\n"
+		src_content: "{{ .User.Username }}:x:0:\n"
+	}
+	mount {
+		dst: "/etc/resolv.conf"
+		src_content: "nameserver 1.1.1.1\nnameserver 1.0.0.1\n"
 	}
 	mount {
 		dst: "/etc/fish/config.fish"
@@ -196,6 +217,11 @@ var configTemplate = template.Must(template.New("nsjail.cfg").Funcs(sprig.Generi
 
 	seccomp_string: "KILL { syslog }"
 	seccomp_string: "DEFAULT ALLOW"
+
+	macvlan_iface: "{{ .Config.Network.Interface }}-jail"
+	macvlan_vs_ip: "{{ .Net.IP }}"
+	macvlan_vs_nm: "{{ .Net.Mask }}"
+	macvlan_vs_gw: "{{ .Config.Network.CIDR.IP }}"
 
 	exec_bin {
 		path: "/bin/su"
@@ -245,6 +271,44 @@ func InitJail(c *JailConfig) error {
 		}
 	}
 
+	la := netlink.NewLinkAttrs()
+	la.Name = c.Network.Interface + "-host"
+	existingVeth, err := netlink.LinkByName(la.Name)
+	if err == nil {
+		if err := netlink.LinkDel(existingVeth); err != nil {
+			return fmt.Errorf("failed to delete existing veth pair: %w", err)
+		}
+	} else if !errors.As(err, &netlink.LinkNotFoundError{}) {
+		return fmt.Errorf("failed to check for existing veth pair: %w", err)
+	}
+
+	jailVethName := c.Network.Interface + "-jail"
+	veth := &netlink.Veth{
+		LinkAttrs: la,
+		PeerName:  jailVethName,
+	}
+	if err := netlink.LinkAdd(veth); err != nil {
+		return fmt.Errorf("failed to create veth pair: %w", err)
+	}
+	if err := netlink.LinkSetUp(veth); err != nil {
+		return fmt.Errorf("failed to set host veth up: %w", err)
+	}
+	if err := netlink.AddrAdd(veth, &netlink.Addr{IPNet: &c.Network.CIDR}); err != nil {
+		return fmt.Errorf("failed to add IP to host veth: %w", err)
+	}
+
+	jailVeth, err := netlink.LinkByName(jailVethName)
+	if err != nil {
+		return fmt.Errorf("failed to get jail veth: %w", err)
+	}
+	if err := netlink.LinkSetUp(jailVeth); err != nil {
+		return fmt.Errorf("failed to set jail veth up: %w", err)
+	}
+
+	if err := exec.Command("firewall.sh", c.Network.CIDR.String()).Run(); err != nil {
+		return fmt.Errorf("failed to set up firewall: %w", err)
+	}
+
 	return nil
 }
 
@@ -257,13 +321,31 @@ func NewShellJail(c *JailConfig, u *iam.User, token, pathVar, command string) (*
 		return nil, fmt.Errorf("failed to create tempfile: %w", err)
 	}
 
-	if err := configTemplate.Execute(f, jailInfo{
+	info := jailInfo{
 		Config:  c,
 		User:    u,
 		Token:   token,
 		Path:    pathVar,
 		Command: command,
-	}); err != nil {
+	}
+
+	if c.Network.Interface != "" {
+		var ipNum uint32
+		netIPBuf := bytes.NewBuffer(c.Network.CIDR.IP.To4())
+		if err := binary.Read(netIPBuf, binary.BigEndian, &ipNum); err != nil {
+			return nil, fmt.Errorf("failed to convert IP address to uint32: %w", err)
+		}
+		ipNum += uint32(u.Id)
+
+		var ipBuf bytes.Buffer
+		binary.Write(&ipBuf, binary.BigEndian, ipNum)
+		info.Net = jailNetInfo{
+			IP:   net.IP(ipBuf.Bytes()),
+			Mask: allAddr.Mask(c.Network.CIDR.Mask).String(),
+		}
+	}
+
+	if err := configTemplate.Execute(f, info); err != nil {
 		return nil, fmt.Errorf("failed to render config template: %w", err)
 	}
 	if err := f.Close(); err != nil {

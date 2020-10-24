@@ -14,7 +14,7 @@ RUN mkdir bin/ && CGO_ENABLED=0 go build -o bin/ ./cmd/...
 
 
 FROM ghcr.io/devplayer0/nsjail-alpine:$NSJAIL_VERSION
-RUN apk --no-cache add fish coreutils openssh-client
+RUN apk --no-cache add fish coreutils openssh-client curl
 
 COPY --from=builder /usr/local/lib/shhd/bin/* /usr/local/bin/
 

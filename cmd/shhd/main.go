@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"net"
 	"os"
 	"os/signal"
 	"strings"
@@ -40,6 +41,14 @@ func init() {
 	viper.SetDefault("jail.cgroups.pids", 64)
 	viper.SetDefault("jail.cgroups.cpu_time", 200)
 	viper.SetDefault("jail.home_size", 32*1024*1024)
+	viper.SetDefault("jail.network.interface", "")
+
+	ip, net, err := net.ParseCIDR("192.168.0.1/16")
+	if err != nil {
+		panic(err)
+	}
+	net.IP = ip
+	viper.SetDefault("jail.network.cidr", net)
 
 	// Config file loading
 	viper.SetConfigType("yaml")
