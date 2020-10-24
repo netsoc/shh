@@ -17,12 +17,13 @@ import (
 func (s *Server) doSession(sess ssh.Session) error {
 	log.WithFields(log.Fields{
 		"address": sess.RemoteAddr(),
+		"command": sess.RawCommand(),
 	}).Info("Opened SSH session")
 
 	cmd, err := util.NewShellJail(&s.config.Jail, &iam.User{
 		Id:       123,
 		Username: "bro",
-	}, os.Getenv("PATH"), "")
+	}, os.Getenv("PATH"), sess.RawCommand())
 	if err != nil {
 		return fmt.Errorf("failed to create nsjail command: %w", err)
 	}
@@ -52,7 +53,7 @@ func (s *Server) doSession(sess ssh.Session) error {
 
 		ptmx, err := pty.StartWithSize(cmd, util.SSHToPTYSize(sshPTY.Window))
 		if err != nil {
-			return fmt.Errorf("failed to start command: %w", err)
+			return fmt.Errorf("failed to start interactive command: %w", err)
 		}
 		defer ptmx.Close()
 
@@ -68,7 +69,30 @@ func (s *Server) doSession(sess ssh.Session) error {
 		go io.Copy(ptmx, sess)
 		go io.Copy(sess, ptmx)
 	} else {
-		return errors.New("must be interactive")
+		stdin, err := cmd.StdinPipe()
+		if err != nil {
+			return fmt.Errorf("failed to create stdin pipe: %w", err)
+		}
+		stdout, err := cmd.StdoutPipe()
+		if err != nil {
+			return fmt.Errorf("failed to create stdout pipe: %w", err)
+		}
+		stderr, err := cmd.StderrPipe()
+		if err != nil {
+			return fmt.Errorf("failed to create stderr pipe: %w", err)
+		}
+
+		if err := cmd.Start(); err != nil {
+			return fmt.Errorf("failed to start command: %w", err)
+		}
+
+		go io.Copy(log.StandardLogger().Out, logR)
+
+		go sigHandler()
+
+		go io.Copy(stdin, sess)
+		go io.Copy(sess, stdout)
+		go io.Copy(sess.Stderr(), stderr)
 	}
 
 	if err := cmd.Wait(); err != nil {
