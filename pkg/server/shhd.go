@@ -2,9 +2,12 @@ package server
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"time"
 
 	"github.com/gliderlabs/ssh"
+	"github.com/netsoc/shh/pkg/util"
 )
 
 // Server represents the shhd server
@@ -31,7 +34,15 @@ func NewServer(c Config) *Server {
 
 // Start starts the shhd server
 func (s *Server) Start() error {
-	return s.ssh.ListenAndServe()
+	if err := util.InitJail(&s.config.Jail); err != nil {
+		return fmt.Errorf("failed to initialize shell jail: %w", err)
+	}
+
+	if err := s.ssh.ListenAndServe(); err != nil && !errors.Is(err, ssh.ErrServerClosed) {
+		return err
+	}
+
+	return nil
 }
 
 // Stop shuts down the shhd server
@@ -40,9 +51,4 @@ func (s *Server) Stop() error {
 	defer cancel()
 
 	return s.ssh.Shutdown(ctx)
-}
-
-func (s *Server) handleSession(sess ssh.Session) {
-	sess.Write([]byte(string("Hello, world!\n")))
-	sess.Close()
 }

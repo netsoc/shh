@@ -31,6 +31,16 @@ func init() {
 	viper.SetDefault("ssh.host_keys", []ssh.Signer{})
 	viper.SetDefault("ssh.host_key_files", []string{})
 
+	viper.SetDefault("jail.tmp_dir", "/tmp/shh")
+	viper.SetDefault("jail.log_level", "WARNING")
+	viper.SetDefault("jail.uid_start", 100000)
+	viper.SetDefault("jail.gid_start", 100000)
+	viper.SetDefault("jail.cgroups.name", "shhd")
+	viper.SetDefault("jail.cgroups.memory", 128*1024*1024)
+	viper.SetDefault("jail.cgroups.pids", 64)
+	viper.SetDefault("jail.cgroups.cpu_time", 200)
+	viper.SetDefault("jail.home_size", 32*1024*1024)
+
 	// Config file loading
 	viper.SetConfigType("yaml")
 	viper.SetConfigName("shhd")

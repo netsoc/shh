@@ -1,4 +1,12 @@
+ARG NSJAIL_VERSION
+FROM ghcr.io/netsoc/nsjail:$NSJAIL_VERSION AS nsjail
+
+
 FROM golang:1.15-alpine
+
+RUN apk --no-cache add libstdc++ libnl3 protobuf
+COPY --from=nsjail /usr/sbin/nsjail /usr/sbin/nsjail
+
 RUN apk --no-cache add git gcc musl-dev
 
 RUN install -d -m 777 /.cache
@@ -7,6 +15,8 @@ VOLUME /usr/local/lib/shhd
 
 COPY tools.go ./
 RUN cat tools.go | sed -nr 's|^\t_ "(.+)"$|\1|p' | xargs -tI % go get %
+
+RUN apk --no-cache add fish coreutils openssh-client
 
 COPY build.dev.sh /usr/local/bin/build.sh
 CMD ["CompileDaemon", "-exclude-dir=.git", \

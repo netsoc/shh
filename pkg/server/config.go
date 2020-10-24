@@ -8,6 +8,7 @@ import (
 
 	"github.com/gliderlabs/ssh"
 	"github.com/mitchellh/mapstructure"
+	"github.com/netsoc/shh/pkg/util"
 	log "github.com/sirupsen/logrus"
 	gossh "golang.org/x/crypto/ssh"
 )
@@ -69,6 +70,8 @@ type Config struct {
 		HostKeys     []ssh.Signer `mapstructure:"host_keys"`
 		HostKeyFiles []string     `mapstructure:"host_key_files"`
 	}
+
+	Jail util.JailConfig
 }
 
 // ReadSecrets loads values for secret config options from files

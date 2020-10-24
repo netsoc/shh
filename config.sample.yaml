@@ -8,3 +8,13 @@ ssh:
   listen_address: ':22'
   host_keys: []
   host_key_files: []
+jail:
+  tmp_dir: /tmp/shh
+  log_level: INFO
+  uid_start: 100000
+  gid_start: 100000
+  cgroups:
+    name: shh
+    memory: 134217728
+    cpu_time: 200
+  home_size: 33554432
