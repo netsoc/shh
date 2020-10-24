@@ -1,13 +1,5 @@
 version: '3'
 services:
-  nsjail:
-    image: ghcr.io/netsoc/nsjail:3.0
-    build:
-      context: .
-      dockerfile: Dockerfile.nsjail
-      args:
-        NSJAIL_VERSION: '3.0'
-
   app:
     image: ghcr.io/netsoc/shhd:dev
     build:

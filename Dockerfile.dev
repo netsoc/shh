@@ -1,5 +1,5 @@
 ARG NSJAIL_VERSION
-FROM ghcr.io/netsoc/nsjail:$NSJAIL_VERSION AS nsjail
+FROM ghcr.io/devplayer0/nsjail-alpine:$NSJAIL_VERSION AS nsjail
 
 
 FROM golang:1.15-alpine
