@@ -15,15 +15,15 @@ import (
 )
 
 func (s *Server) doSession(sess ssh.Session) error {
+	user := sess.Context().Value(keyUser).(*iam.User)
 	log.WithFields(log.Fields{
+		"user":    user.Username,
 		"address": sess.RemoteAddr(),
 		"command": sess.RawCommand(),
 	}).Info("Opened SSH session")
 
-	cmd, err := util.NewShellJail(&s.config.Jail, &iam.User{
-		Id:       123,
-		Username: "bro",
-	}, os.Getenv("PATH"), sess.RawCommand())
+	token := sess.Context().Value(keyUserToken).(string)
+	cmd, err := util.NewShellJail(&s.config.Jail, user, token, os.Getenv("PATH"), sess.RawCommand())
 	if err != nil {
 		return fmt.Errorf("failed to create nsjail command: %w", err)
 	}

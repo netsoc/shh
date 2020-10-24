@@ -36,6 +36,7 @@ type JailConfig struct {
 type jailInfo struct {
 	Config  *JailConfig
 	User    *iam.User
+	Token   string
 	Path    string
 	Command string
 }
@@ -169,7 +170,7 @@ var configTemplate = template.Must(template.New("nsjail.cfg").Funcs(sprig.Generi
 
 	mount {
 		dst: "/etc/passwd"
-		src_content: "root:x:0:0::/:/sbin/nologin\n{{ .User.Username }}:x:1000:1000::/home/{{ .User.Username }}:/usr/bin/fish\n"
+		src_content: "root:x:0:0::/:/bin/ash\n{{ .User.Username }}:x:1000:1000::/home/{{ .User.Username }}:/usr/bin/fish\n"
 	}
 	mount {
 		dst: "/etc/group"
@@ -189,7 +190,7 @@ var configTemplate = template.Must(template.New("nsjail.cfg").Funcs(sprig.Generi
 	}
 	mount {
 		dst: "/home/{{ .User.Username }}/.netsoc.yaml"
-		src_content: "test"
+		src_content: "token: {{ .Token }}\n"
 		rw: true
 	}
 
@@ -248,7 +249,7 @@ func InitJail(c *JailConfig) error {
 }
 
 // NewShellJail creates a new exec.Cmd for running fish in an nsjail
-func NewShellJail(c *JailConfig, u *iam.User, pathVar, command string) (*exec.Cmd, error) {
+func NewShellJail(c *JailConfig, u *iam.User, token, pathVar, command string) (*exec.Cmd, error) {
 	filename := path.Join(c.TmpDir, fmt.Sprintf("u%v.cfg", u.Id))
 
 	f, err := os.Create(filename)
@@ -259,6 +260,7 @@ func NewShellJail(c *JailConfig, u *iam.User, pathVar, command string) (*exec.Cm
 	if err := configTemplate.Execute(f, jailInfo{
 		Config:  c,
 		User:    u,
+		Token:   token,
 		Path:    pathVar,
 		Command: command,
 	}); err != nil {

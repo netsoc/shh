@@ -1,12 +1,14 @@
 package util
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"syscall"
 
 	"github.com/creack/pty"
 	"github.com/gliderlabs/ssh"
+	iam "github.com/netsoc/iam/client"
 )
 
 // SSHToPTYSize converts an SSH window size to pty window size
@@ -62,4 +64,17 @@ func EnsureNod(path string, mode uint32, dev uint64) error {
 	}
 
 	return syscall.Mknod(path, mode, int(dev))
+}
+
+// APIError re-formats an OpenAPI-generated API client error
+func APIError(err error) error {
+	var iamGeneric iam.GenericOpenAPIError
+	if ok := errors.As(err, &iamGeneric); ok {
+		if iamError, ok := iamGeneric.Model().(iam.Error); ok {
+			return errors.New(iamError.Message)
+		}
+		return err
+	}
+
+	return err
 }
