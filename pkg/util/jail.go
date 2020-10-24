@@ -145,6 +145,12 @@ var configTemplate = template.Must(template.New("nsjail.cfg").Funcs(sprig.Generi
 		rw: false
 	}
 	mount {
+		src: "/lib64"
+		dst: "/lib64"
+		is_bind: true
+		rw: false
+	}
+	mount {
 		src: "/bin"
 		dst: "/bin"
 		is_bind: true
@@ -174,6 +180,11 @@ var configTemplate = template.Must(template.New("nsjail.cfg").Funcs(sprig.Generi
 	mount {
 		src: "/etc/fish"
 		dst: "/etc/fish"
+		is_bind: true
+	}
+	mount {
+		src: "/etc/ssl"
+		dst: "/etc/ssl"
 		is_bind: true
 	}
 

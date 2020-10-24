@@ -14,9 +14,15 @@ RUN mkdir bin/ && CGO_ENABLED=0 go build -o bin/ ./cmd/...
 
 
 FROM ghcr.io/devplayer0/nsjail-alpine:$NSJAIL_VERSION
-RUN apk --no-cache add fish coreutils openssh-client curl
+ARG NETSOC_CLI_VERSION
+
+RUN apk --no-cache add libc6-compat fish coreutils openssh-client curl
+
+RUN curl -fLo /usr/local/bin/netsoc "https://github.com/netsoc/cli/releases/download/v${NETSOC_CLI_VERSION}/cli-linux-amd64" && \
+    chmod +x /usr/local/bin/netsoc && \
+    netsoc completion fish > /etc/fish/completions/netsoc.fish
 
 COPY --from=builder /usr/local/lib/shhd/bin/* /usr/local/bin/
 
-EXPOSE 80/tcp
+EXPOSE 22/tcp
 ENTRYPOINT ["/usr/local/bin/shhd"]

@@ -1,8 +1,8 @@
 ARG NSJAIL_VERSION
 FROM ghcr.io/devplayer0/nsjail-alpine:$NSJAIL_VERSION AS nsjail
 
-
 FROM golang:1.15-alpine
+ARG NETSOC_CLI_VERSION
 
 RUN apk --no-cache add git gcc musl-dev
 
@@ -17,7 +17,10 @@ RUN apk --no-cache add libstdc++ libnl3 protobuf iproute2 iptables
 COPY --from=nsjail /usr/sbin/nsjail /usr/sbin/nsjail
 COPY --from=nsjail /usr/local/sbin/firewall.sh /usr/local/sbin/firewall.sh
 
-RUN apk --no-cache add fish coreutils openssh-client curl
+RUN apk --no-cache add libc6-compat fish coreutils openssh-client curl
+RUN curl -fLo /usr/local/bin/netsoc "https://github.com/netsoc/cli/releases/download/v${NETSOC_CLI_VERSION}/cli-linux-amd64" && \
+    chmod +x /usr/local/bin/netsoc && \
+    netsoc completion fish > /etc/fish/completions/netsoc.fish
 
 COPY build.dev.sh /usr/local/bin/build.sh
 CMD ["CompileDaemon", "-exclude-dir=.git", \
