@@ -14,18 +14,10 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func (s *Server) doSession(sess ssh.Session) error {
-	user := sess.Context().Value(keyUser).(*iam.User)
-	log.WithFields(log.Fields{
-		"user":    user.Username,
-		"address": sess.RemoteAddr(),
-		"command": sess.RawCommand(),
-	}).Info("Opened SSH session")
-
-	sshPTY, resizeChan, interactive := sess.Pty()
-	wsLogin := sess.Context().Value(keyWsLogin).(bool)
+func (s *Server) shellSession(sess ssh.Session) error {
 	command := sess.RawCommand()
-	if wsLogin {
+	sshPTY, resizeChan, interactive := sess.Pty()
+	if sess.Context().Value(keyWsLogin).(bool) {
 		if interactive {
 			command = "netsoc webspace login"
 		} else {
@@ -33,6 +25,7 @@ func (s *Server) doSession(sess ssh.Session) error {
 		}
 	}
 
+	user := sess.Context().Value(keyUser).(*iam.User)
 	token := sess.Context().Value(keyUserToken).(string)
 	cmd, err := util.NewShellJail(&s.config.Jail, user, token, os.Getenv("PATH"), command)
 	if err != nil {
@@ -116,6 +109,17 @@ func (s *Server) doSession(sess ssh.Session) error {
 	}
 
 	return nil
+}
+func (s *Server) doSession(sess ssh.Session) error {
+	user := sess.Context().Value(keyUser).(*iam.User)
+	log.WithFields(log.Fields{
+		"user":    user.Username,
+		"address": sess.RemoteAddr(),
+		"command": sess.RawCommand(),
+	}).Info("Opened SSH session")
+
+	// TODO: maybe if the user is doing a login skip allocating a jail and executing the CLI?
+	return s.shellSession(sess)
 }
 
 func (s *Server) handleSession(sess ssh.Session) {

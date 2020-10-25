@@ -5,9 +5,10 @@ import (
 	"regexp"
 
 	"github.com/gliderlabs/ssh"
+	log "github.com/sirupsen/logrus"
+
 	iam "github.com/netsoc/iam/client"
 	"github.com/netsoc/shh/pkg/util"
-	log "github.com/sirupsen/logrus"
 )
 
 var regexDirectLogin = regexp.MustCompile(`^(\S+)-ws$`)

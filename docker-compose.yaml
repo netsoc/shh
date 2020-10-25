@@ -15,6 +15,7 @@ services:
     ports:
       - '2222:2222'
     volumes:
+      - /etc/resolv.conf:/etc/resolv.conf:ro
       - .:/usr/local/lib/shhd
       - ./config.yaml:/run/config/shhd.yaml:ro
     privileged: true

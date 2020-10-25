@@ -31,22 +31,24 @@ type Server struct {
 
 // NewServer creates a new shhd server
 func NewServer(c Config) *Server {
-	cfg := iam.NewConfiguration()
-	cfg.BasePath = c.IAM.URL
-	if c.IAM.AllowInsecure {
-		cfg.HTTPClient = &http.Client{
-			Transport: &http.Transport{
-				TLSClientConfig: &tls.Config{
-					InsecureSkipVerify: true,
-				},
+	insecureClient := &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true,
 			},
-		}
+		},
+	}
+
+	iamCfg := iam.NewConfiguration()
+	iamCfg.BasePath = c.IAM.URL
+	if c.IAM.AllowInsecure {
+		iamCfg.HTTPClient = insecureClient
 	}
 
 	s := &Server{
 		config: c,
 
-		iam: iam.NewAPIClient(cfg),
+		iam: iam.NewAPIClient(iamCfg),
 		ssh: &ssh.Server{
 			Addr:        c.SSH.ListenAddress,
 			HostSigners: c.SSH.HostKeys,
