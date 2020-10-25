@@ -48,6 +48,11 @@ config:
       memory: 134217728
       cpu_time: 200
     home_size: 33554432
+    greeting: |
+      Welcome to Netsoc SHH (not a typo :P).
+      The latest version of the CLI is pre-installed (type netsoc).
+
+      For more information, see https://docs.netsoc.ie.
     network:
       interface: nsjail
       address: '192.168.0.1/16'
