@@ -48,7 +48,7 @@ func init() {
 		panic(err)
 	}
 	net.IP = ip
-	viper.SetDefault("jail.network.cidr", net)
+	viper.SetDefault("jail.network.address", net)
 
 	// Config file loading
 	viper.SetConfigType("yaml")

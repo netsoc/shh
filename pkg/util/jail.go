@@ -41,7 +41,7 @@ type JailConfig struct {
 
 	Network struct {
 		Interface string
-		CIDR      net.IPNet
+		Address   net.IPNet
 	}
 }
 
@@ -232,15 +232,12 @@ var configTemplate = template.Must(template.New("nsjail.cfg").Funcs(sprig.Generi
 	macvlan_iface: "{{ .Config.Network.Interface }}-jail"
 	macvlan_vs_ip: "{{ .Net.IP }}"
 	macvlan_vs_nm: "{{ .Net.Mask }}"
-	macvlan_vs_gw: "{{ .Config.Network.CIDR.IP }}"
+	macvlan_vs_gw: "{{ .Config.Network.Address.IP }}"
 
 	exec_bin {
 		path: "/bin/su"
 		arg0: "su"
 		arg: "-"
-		#arg: "root"
-		#arg: "-s"
-		#arg: "/usr/bin/fish"
 		arg: "{{ .User.Username }}"
 	{{- if .Command }}
 		arg: "-c"
@@ -304,7 +301,7 @@ func InitJail(c *JailConfig) error {
 	if err := netlink.LinkSetUp(veth); err != nil {
 		return fmt.Errorf("failed to set host veth up: %w", err)
 	}
-	if err := netlink.AddrAdd(veth, &netlink.Addr{IPNet: &c.Network.CIDR}); err != nil {
+	if err := netlink.AddrAdd(veth, &netlink.Addr{IPNet: &c.Network.Address}); err != nil {
 		return fmt.Errorf("failed to add IP to host veth: %w", err)
 	}
 
@@ -316,7 +313,7 @@ func InitJail(c *JailConfig) error {
 		return fmt.Errorf("failed to set jail veth up: %w", err)
 	}
 
-	if err := exec.Command("firewall.sh", c.Network.CIDR.String()).Run(); err != nil {
+	if err := exec.Command("firewall.sh", c.Network.Address.String()).Run(); err != nil {
 		return fmt.Errorf("failed to set up firewall: %w", err)
 	}
 
@@ -342,7 +339,7 @@ func NewShellJail(c *JailConfig, u *iam.User, token, pathVar, command string) (*
 
 	if c.Network.Interface != "" {
 		var ipNum uint32
-		netIPBuf := bytes.NewBuffer(c.Network.CIDR.IP.To4())
+		netIPBuf := bytes.NewBuffer(c.Network.Address.IP.To4())
 		if err := binary.Read(netIPBuf, binary.BigEndian, &ipNum); err != nil {
 			return nil, fmt.Errorf("failed to convert IP address to uint32: %w", err)
 		}
@@ -352,7 +349,7 @@ func NewShellJail(c *JailConfig, u *iam.User, token, pathVar, command string) (*
 		binary.Write(&ipBuf, binary.BigEndian, ipNum)
 		info.Net = jailNetInfo{
 			IP:   net.IP(ipBuf.Bytes()),
-			Mask: allAddr.Mask(c.Network.CIDR.Mask).String(),
+			Mask: allAddr.Mask(c.Network.Address.Mask).String(),
 		}
 	}
 

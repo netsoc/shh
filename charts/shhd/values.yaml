@@ -49,7 +49,7 @@ config:
     home_size: 33554432
     network:
       interface: nsjail
-      cidr: '192.168.0.1/16'
+      address: '192.168.0.1/16'
 
 secrets:
   iamToken: ''
