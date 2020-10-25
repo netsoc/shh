@@ -19,6 +19,8 @@ jail:
     memory: 134217728
     cpu_time: 200
   home_size: 33554432
+  greeting: |
+    Hello there!
   network:
     interface: nsjail
     address: '192.168.0.1/16'

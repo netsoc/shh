@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/MakeNowJust/heredoc"
 	"github.com/fsnotify/fsnotify"
 	"github.com/gliderlabs/ssh"
 	log "github.com/sirupsen/logrus"
@@ -43,6 +44,12 @@ func init() {
 	viper.SetDefault("jail.cgroups.pids", 64)
 	viper.SetDefault("jail.cgroups.cpu_time", 200)
 	viper.SetDefault("jail.home_size", 32*1024*1024)
+	viper.SetDefault("jail.greeting", heredoc.Doc(`
+		Welcome to Netsoc SHH (not a typo :P).
+		The latest version of the CLI is pre-installed (type netsoc).
+
+		For more information, see https://docs.netsoc.ie.
+	`))
 	viper.SetDefault("jail.network.interface", "")
 
 	ip, net, err := net.ParseCIDR("192.168.0.1/16")

@@ -38,6 +38,7 @@ type JailConfig struct {
 	} `mapstructure:"cgroups"`
 
 	HomeSize uint64 `mapstructure:"home_size"`
+	Greeting string
 
 	Network struct {
 		Interface string
@@ -210,7 +211,7 @@ var configTemplate = template.Must(template.New("nsjail.cfg").Funcs(sprig.Generi
 	}
 	mount {
 		dst: "/etc/fish/config.fish"
-		src_content: "set -gx PATH {{ .Path }}"
+		src_content: "set -gx PATH {{ .Path }}\nfunction fish_greeting\n    echo \"{{ b64enc .Config.Greeting }}\" | base64 -d\nend\n"
 	}
 
 	mount {
