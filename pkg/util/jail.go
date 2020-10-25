@@ -222,7 +222,7 @@ var configTemplate = template.Must(template.New("nsjail.cfg").Funcs(sprig.Generi
 	}
 	mount {
 		dst: "/home/{{ .User.Username }}/.netsoc.yaml"
-		src_content: "token: {{ .Token }}\n"
+		src_content: "last_update_check: 9999-12-31T23:59:59Z\ntoken: {{ .Token }}\n"
 		rw: true
 	}
 
