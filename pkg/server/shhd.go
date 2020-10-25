@@ -57,6 +57,7 @@ func NewServer(c Config) *Server {
 
 	s.ssh.Handle(s.handleSession)
 	s.ssh.PasswordHandler = s.handlePassword
+	s.ssh.PublicKeyHandler = s.handlePublicKey
 
 	return s
 }

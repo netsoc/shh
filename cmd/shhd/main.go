@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/signal"
 	"strings"
+	"time"
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/gliderlabs/ssh"
@@ -27,6 +28,7 @@ func init() {
 	viper.SetDefault("iam.token", "")
 	viper.SetDefault("iam.token_file", "")
 	viper.SetDefault("iam.allow_insecure", false)
+	viper.SetDefault("iam.login_validity", 365*24*time.Hour)
 
 	viper.SetDefault("ssh.listen_address", ":22")
 	viper.SetDefault("ssh.host_keys", []ssh.Signer{})

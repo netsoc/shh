@@ -4,6 +4,7 @@ iam:
   token: A.B.C
   token_file: /path/to/token.txt
   allow_insecure: false
+  login_validity: '8760h'
 ssh:
   listen_address: ':22'
   host_keys: []

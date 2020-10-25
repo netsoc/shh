@@ -37,6 +37,7 @@ config:
   iam:
     url: 'https://iam.netsoc.ie/v1'
     allow_insecure: false
+    login_validity: '8760h'
   jail:
     tmp_dir: /tmp/shh
     log_level: WARNING

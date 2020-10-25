@@ -15,7 +15,7 @@ require (
 	github.com/huandu/xstrings v1.3.2 // indirect
 	github.com/imdario/mergo v0.3.11 // indirect
 	github.com/mitchellh/mapstructure v1.3.3
-	github.com/netsoc/iam/client v1.0.9
+	github.com/netsoc/iam/client v1.0.10
 	github.com/sirupsen/logrus v1.7.0
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.7.1

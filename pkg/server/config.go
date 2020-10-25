@@ -6,6 +6,7 @@ import (
 	"net"
 	"reflect"
 	"strings"
+	"time"
 
 	"github.com/gliderlabs/ssh"
 	"github.com/mitchellh/mapstructure"
@@ -78,8 +79,9 @@ type Config struct {
 	IAM struct {
 		URL           string
 		Token         string
-		TokenFile     string `mapstructure:"token_file"`
-		AllowInsecure bool   `mapstructure:"allow_insecure"`
+		TokenFile     string        `mapstructure:"token_file"`
+		AllowInsecure bool          `mapstructure:"allow_insecure"`
+		LoginValidity time.Duration `mapstructure:"login_validity"`
 	}
 
 	SSH struct {
