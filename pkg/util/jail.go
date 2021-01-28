@@ -188,6 +188,16 @@ var configTemplate = template.Must(template.New("nsjail.cfg").Funcs(sprig.Generi
 		dst: "/etc/ssl"
 		is_bind: true
 	}
+	mount {
+		src: "/etc/man_db.conf"
+		dst: "/etc/man_db.conf"
+		is_bind: true
+	}
+	mount {
+		src: "/var/cache/man"
+		dst: "/var/cache/man"
+		is_bind: true
+	}
 
 	mount {
 		dst: "/tmp"
