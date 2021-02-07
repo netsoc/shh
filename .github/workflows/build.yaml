@@ -15,7 +15,7 @@ jobs:
       CR_PAT_USER: devplayer0
       REPO: ghcr.io/netsoc/shhd
       NSJAIL_VERSION: '3.0'
-      CLI_VERSION: '0.3.7'
+      CLI_VERSION: '0.4.0'
 
     steps:
       - uses: actions/checkout@v2
