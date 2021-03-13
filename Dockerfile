@@ -31,3 +31,5 @@ COPY --from=builder /usr/local/lib/shhd/bin/* /usr/local/bin/
 
 EXPOSE 22/tcp
 ENTRYPOINT ["/usr/local/bin/shhd"]
+
+LABEL org.opencontainers.image.source https://github.com/netsoc/shh
