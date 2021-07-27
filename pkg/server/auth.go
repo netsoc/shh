@@ -40,7 +40,11 @@ func (s *Server) doLogin(ctx ssh.Context, password string, key ssh.PublicKey) er
 	}
 	ctx.SetValue(keyUser, &u)
 
-	if key != nil && u.SshKey != nil {
+	if key != nil {
+		if u.SshKey == nil {
+			return errors.New("user has no public key configured")
+		}
+
 		userKey, _, _, _, err := ssh.ParseAuthorizedKey([]byte(*u.SshKey))
 		if err != nil {
 			return fmt.Errorf("failed to parse public key: %w", err)
