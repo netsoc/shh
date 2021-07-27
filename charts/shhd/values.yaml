@@ -55,6 +55,8 @@ config:
       The latest version of the CLI is pre-installed (type netsoc).
 
       For more information, see https://docs.netsoc.ie.
+    cli_extra:
+      last_update_check: '9999-12-31T23:59:59Z'
     network:
       interface: nsjail
       address: '192.168.0.1/16'
