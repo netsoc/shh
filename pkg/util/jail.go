@@ -3,6 +3,7 @@ package util
 import (
 	"bytes"
 	"encoding/binary"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net"
@@ -20,6 +21,8 @@ import (
 )
 
 var allAddr = net.IPv4(0xff, 0xff, 0xff, 0xff)
+
+var cliConfig map[string]interface{}
 
 // JailConfig represents jail configuration
 type JailConfig struct {
@@ -40,6 +43,8 @@ type JailConfig struct {
 	HomeSize uint64 `mapstructure:"home_size"`
 	Greeting string
 
+	CLIExtra map[string]interface{} `mapstructure:"cli_extra"`
+
 	Network struct {
 		Interface string
 		Address   net.IPNet
@@ -51,16 +56,16 @@ type jailNetInfo struct {
 	Mask string
 }
 type jailInfo struct {
-	Config  *JailConfig
-	User    *iam.User
-	Token   string
-	Path    string
-	Command string
+	Config    *JailConfig
+	User      *iam.User
+	CLIConfig map[string]interface{}
+	Path      string
+	Command   string
 
 	Net jailNetInfo
 }
 
-var configTemplate = template.Must(template.New("nsjail.cfg").Funcs(sprig.GenericFuncMap()).Parse(heredoc.Doc(`
+var configTemplate = template.Must(template.New("nsjail.cfg").Funcs(sprig.GenericFuncMap()).Funcs(TemplateFuncs).Parse(heredoc.Doc(`
 	name: "shhd-fish"
 	description: "nsjail config to run restricted fish"
 
@@ -233,7 +238,7 @@ var configTemplate = template.Must(template.New("nsjail.cfg").Funcs(sprig.Generi
 	}
 	mount {
 		dst: "/home/{{ .User.Username }}/.netsoc.yaml"
-		src_content: "last_update_check: 9999-12-31T23:59:59Z\ntoken: {{ .Token }}\n"
+		src_content: "{{ .CLIConfig | mustToRawJson | toBytes | bytesToCString }}"
 		rw: true
 	}
 
@@ -328,6 +333,19 @@ func InitJail(c *JailConfig) error {
 		return fmt.Errorf("failed to set up firewall: %w", err)
 	}
 
+	if c.CLIExtra != nil {
+		// HACK: Use json to create a "copy" of the CLI config
+		iamEnc, err := json.Marshal(c.CLIExtra)
+		if err != nil {
+			return fmt.Errorf("failed to encode IAM config: %w", err)
+		}
+		if err := json.Unmarshal(iamEnc, &cliConfig); err != nil {
+			return fmt.Errorf("failed to decode IAM config: %w", err)
+		}
+	} else {
+		cliConfig = make(map[string]interface{})
+	}
+
 	return nil
 }
 
@@ -340,12 +358,13 @@ func NewShellJail(c *JailConfig, u *iam.User, token, pathVar, command string) (*
 		return nil, fmt.Errorf("failed to create tempfile: %w", err)
 	}
 
+	cliConfig["token"] = token
 	info := jailInfo{
-		Config:  c,
-		User:    u,
-		Token:   token,
-		Path:    pathVar,
-		Command: command,
+		Config:    c,
+		User:      u,
+		CLIConfig: cliConfig,
+		Path:      pathVar,
+		Command:   command,
 	}
 
 	if c.Network.Interface != "" {

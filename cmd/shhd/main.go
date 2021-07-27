@@ -50,8 +50,12 @@ func init() {
 
 		For more information, see https://docs.netsoc.ie.
 	`))
-	viper.SetDefault("jail.network.interface", "")
 
+	viper.SetDefault("jail.cli_extra", map[string]interface{}{
+		"last_update_check": "9999-12-31T23:59:59Z",
+	})
+
+	viper.SetDefault("jail.network.interface", "")
 	ip, net, err := net.ParseCIDR("192.168.0.1/16")
 	if err != nil {
 		panic(err)

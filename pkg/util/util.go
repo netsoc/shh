@@ -4,12 +4,20 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strconv"
+	"strings"
 	"syscall"
+	"text/template"
 
 	"github.com/creack/pty"
 	"github.com/gliderlabs/ssh"
 	iam "github.com/netsoc/iam/client"
 )
+
+var TemplateFuncs = template.FuncMap{
+	"bytesToCString": BytesToCString,
+	"toBytes":        func(s string) []byte { return []byte(s) },
+}
 
 // SSHToPTYSize converts an SSH window size to pty window size
 func SSHToPTYSize(s ssh.Window) *pty.Winsize {
@@ -77,4 +85,14 @@ func APIError(err error) error {
 	}
 
 	return err
+}
+
+func BytesToCString(data []byte) string {
+	var sb strings.Builder
+	for _, b := range data {
+		sb.WriteString(`\x`)
+		sb.WriteString(strconv.FormatUint(uint64(b), 16))
+	}
+
+	return sb.String()
 }
