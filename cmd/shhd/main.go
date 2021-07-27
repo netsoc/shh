@@ -39,7 +39,7 @@ func init() {
 	viper.SetDefault("jail.log_level", "WARNING")
 	viper.SetDefault("jail.uid_start", 100000)
 	viper.SetDefault("jail.gid_start", 100000)
-	viper.SetDefault("jail.cgroups.name", "shhd")
+	viper.SetDefault("jail.cgroups.name", "shh")
 	viper.SetDefault("jail.cgroups.memory", 128*1024*1024)
 	viper.SetDefault("jail.cgroups.pids", 64)
 	viper.SetDefault("jail.cgroups.cpu_time", 200)
