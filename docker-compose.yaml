@@ -5,6 +5,7 @@ services:
     build:
       context: .
       args:
+        TARGETPLATFORM: linux/amd64
         NSJAIL_VERSION: '3.0-2'
         NETSOC_CLI_VERSION: '0.4.2'
     environment:
