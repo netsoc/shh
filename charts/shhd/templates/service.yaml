@@ -5,8 +5,15 @@ metadata:
   name: {{ include "shhd.fullname" . }}
   labels:
     {{- include "shhd.labels" . | nindent 4 }}
+{{- with .Values.annotations }}
+  annotations:
+    {{- toYaml . | nindent 8 }}
+{{- end }}
 spec:
   type: {{ .Values.service.type }}
+  {{- with .Values.service.spec }}
+  {{- toYaml . | nindent 2 }}
+  {{- end }}
   ports:
     - port: {{ .Values.service.port }}
       targetPort: ssh

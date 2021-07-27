@@ -15,6 +15,8 @@ podAnnotations: {}
 service:
   type: LoadBalancer
   port: 22
+  annotations: {}
+  spec: {}
 
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious
