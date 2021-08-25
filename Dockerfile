@@ -1,12 +1,9 @@
 ARG NSJAIL_VERSION
-FROM golang:1.16-alpine3.13 AS builder
+FROM golang:1.17-alpine3.13 AS builder
 
 WORKDIR /usr/local/lib/shhd
 COPY go.* ./
 RUN go mod download
-
-COPY tools.go ./
-RUN cat tools.go | sed -nr 's|^\t_ "(.+)"$|\1|p' | xargs -tI % go get %
 
 COPY cmd/ ./cmd/
 COPY pkg/ ./pkg/
